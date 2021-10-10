@@ -786,28 +786,12 @@ public class AllAppsContainerView extends SpringRelativeLayout implements DragSo
 
     protected void updateHeaderScroll(int scrolledOffset) {
 
-        float prog = Utilities.boundToRange((float) scrolledOffset / mHeaderThreshold, 0f, 1f);
-        int viewBG = ColorUtils.blendARGB(mScrimColor, mHeaderProtectionColor, prog);
-        int headerColor = ColorUtils.setAlphaComponent(viewBG,
-                (int) (getSearchView().getAlpha() * 255));
-        int tabsAlpha = mHeader.getPeripheralProtectionHeight() == 0 ? 0
-                : (int) (Utilities.boundToRange(
-                        (scrolledOffset + mHeader.mSnappedScrolledY) / mHeaderThreshold, 0f, 1f)
-                        * 255);
-        if (headerColor != mHeaderColor || mTabsProtectionAlpha != tabsAlpha) {
-            mHeaderColor = headerColor;
-            mTabsProtectionAlpha = tabsAlpha;
-            invalidateHeader();
-        }
         if (mSearchUiManager.getEditText() != null) {
             ExtendedEditText editText = mSearchUiManager.getEditText();
             boolean bgVisible = editText.getBackgroundVisibility();
             if (scrolledOffset == 0 && !mIsSearching) {
                 bgVisible = true;
-            } else if (scrolledOffset > mHeaderThreshold) {
-                bgVisible = false;
             }
-            editText.setBackgroundVisibility(bgVisible, 1 - prog);
         }
     }
 

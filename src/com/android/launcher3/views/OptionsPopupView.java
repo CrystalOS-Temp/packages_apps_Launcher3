@@ -22,6 +22,7 @@ import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.IGNORE
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_WIDGETSTRAY_BUTTON_TAP_OR_LONGPRESS;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -191,12 +192,17 @@ public class OptionsPopupView extends ArrowPopup
      */
     public static ArrayList<OptionItem> getOptions(Launcher launcher) {
         ArrayList<OptionItem> options = new ArrayList<>();
+        if (!launcher.isOnDefaultPage()) {
+            options.add(new OptionItem(launcher, R.string.set_default_home_page,
+                    R.drawable.ic_default_home_page, IGNORE,
+                    OptionsPopupView::setDefaultPage));
+        }
         options.add(new OptionItem(launcher,
                 R.string.settings_button_text,
                 R.drawable.ic_setting,
                 LAUNCHER_SETTINGS_BUTTON_TAP_OR_LONGPRESS,
                 OptionsPopupView::startSettings));
-        if (!WidgetsModel.GO_DISABLE_WIDGETS) {
+        if (!WidgetsModel.GO_DISABLE_WIDGETS && Utilities.isWorkspaceEditAllowed(launcher)) {
             options.add(new OptionItem(launcher,
                     R.string.widget_button_text,
                     R.drawable.ic_widget,
@@ -258,6 +264,9 @@ public class OptionsPopupView extends ArrowPopup
             intent.putExtra(EXTRA_WALLPAPER_FLAVOR, "wallpaper_only");
         } else {
             intent.putExtra(EXTRA_WALLPAPER_FLAVOR, "focus_wallpaper");
+            intent.setComponent(new ComponentName(
+                    launcher.getString(R.string.wallpaper_picker_package),
+                    "com.android.customization.picker.CustomizationPickerActivity"));
         }
         String pickerPackage = launcher.getString(R.string.wallpaper_picker_package);
         if (!TextUtils.isEmpty(pickerPackage)) {
@@ -272,6 +281,12 @@ public class OptionsPopupView extends ArrowPopup
         placeholderInfo.itemType = LauncherSettings.Favorites.ITEM_TYPE_SHORTCUT;
         placeholderInfo.container = LauncherSettings.Favorites.CONTAINER_SETTINGS;
         return placeholderInfo;
+    }
+
+    public static boolean setDefaultPage(View view) {
+        Launcher launcher = Launcher.getLauncher(view.getContext());
+        launcher.setCurrentDefaultPage();
+        return true;
     }
 
     public static class OptionItem {

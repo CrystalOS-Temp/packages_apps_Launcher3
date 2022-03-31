@@ -20,8 +20,13 @@ import static androidx.core.view.accessibility.AccessibilityNodeInfoCompat.ACTIO
 
 import static com.android.launcher3.states.RotationHelper.ALLOW_ROTATION_PREFERENCE_KEY;
 
+import static com.android.launcher3.OverlayCallbackImpl.KEY_DOCK_SEARCH;
+import static com.android.launcher3.OverlayCallbackImpl.KEY_ENABLE_MINUS_ONE;
+
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -35,6 +40,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
+import androidx.preference.Preference.OnPreferenceChangeListener;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartFragmentCallback;
 import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartScreenCallback;
@@ -44,11 +50,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.InvariantDeviceProfile;
+import com.android.launcher3.LauncherAppState;
 import com.android.launcher3.LauncherFiles;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.model.WidgetsModel;
+import com.android.launcher3.settings.preference.CustomSeekBarPreference;
 import com.android.launcher3.uioverrides.plugins.PluginManagerWrapper;
 
 import java.util.Collections;
@@ -62,10 +70,10 @@ public class SettingsActivity extends FragmentActivity
         SharedPreferences.OnSharedPreferenceChangeListener{
 
     /** List of fragments that can be hosted by this activity. */
-    private static final List<String> VALID_PREFERENCE_FRAGMENTS =
-            !Utilities.IS_DEBUG_DEVICE ? Collections.emptyList()
-                    : Collections.singletonList(DeveloperOptionsFragment.class.getName());
+    private static final List<String> VALID_PREFERENCE_FRAGMENTS = Collections.singletonList(
+            DeveloperOptionsFragment.class.getName());
 
+    private static final String SUGGESTIONS_KEY = "pref_suggestions";
     private static final String DEVELOPER_OPTIONS_KEY = "pref_developer_options";
     private static final String FLAGS_PREFERENCE_KEY = "flag_toggler";
 
@@ -136,7 +144,11 @@ public class SettingsActivity extends FragmentActivity
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) { }
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (Utilities.KEY_DT_GESTURE.equals(key)) {
+                LauncherAppState.getInstanceNoCreate().setNeedsRestart();
+        }
+    }
 
     private boolean startPreference(String fragment, Bundle args, String key) {
         if (Utilities.ATLEAST_P && getSupportFragmentManager().isStateSaved()) {
@@ -187,6 +199,12 @@ public class SettingsActivity extends FragmentActivity
         private String mHighLightKey;
         private boolean mPreferenceHighlighted = false;
         private Preference mDeveloperOptionPref;
+
+        protected static final String GSA_PACKAGE = "com.google.android.googlequicksearchbox";
+        protected static final String DPS_PACKAGE = "com.google.android.as";
+
+        private Preference mShowGoogleAppPref;
+        private Preference mShowGoogleBarPref;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -265,9 +283,45 @@ public class SettingsActivity extends FragmentActivity
                     // Only show flag toggler UI if this build variant implements that.
                     return FeatureFlags.showFlagTogglerUi(getContext());
 
+                case SUGGESTIONS_KEY:
+                    // Show if Device Personalization Services is present.
+                    return isDPSEnabled(getContext());
+
                 case DEVELOPER_OPTIONS_KEY:
                     mDeveloperOptionPref = preference;
                     return updateDeveloperOption();
+
+                case KEY_ENABLE_MINUS_ONE:
+                    mShowGoogleAppPref = preference;
+                    updateIsGoogleAppEnabled();
+                    return true;
+
+                case Utilities.ICON_SIZE:
+                    final CustomSeekBarPreference iconSizes = (CustomSeekBarPreference)
+                            findPreference(Utilities.ICON_SIZE);
+                    iconSizes.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+                        public boolean onPreferenceChange(Preference preference, Object newValue) {
+                            LauncherAppState.getInstanceNoCreate().setNeedsRestart();
+                            return true;
+                        }
+                    });
+                    return true;
+
+                case Utilities.FONT_SIZE:
+                    final CustomSeekBarPreference fontSizes = (CustomSeekBarPreference)
+                            findPreference(Utilities.FONT_SIZE);
+                    fontSizes.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+                        public boolean onPreferenceChange(Preference preference, Object newValue) {
+                            LauncherAppState.getInstanceNoCreate().setNeedsRestart();
+                            return true;
+                        }
+                    });
+                    return true;
+
+                case KEY_DOCK_SEARCH:
+                    mShowGoogleBarPref = preference;
+                    updateIsGoogleAppEnabled();
+                    return true;
             }
 
             return true;
@@ -291,6 +345,31 @@ public class SettingsActivity extends FragmentActivity
             return showPreference;
         }
 
+        public static boolean isDPSEnabled(Context context) {
+            try {
+                return context.getPackageManager().getApplicationInfo(DPS_PACKAGE, 0).enabled;
+            } catch (PackageManager.NameNotFoundException e) {
+                return false;
+            }
+        }
+
+        public static boolean isGSAEnabled(Context context) {
+            try {
+                return context.getPackageManager().getApplicationInfo(GSA_PACKAGE, 0).enabled;
+            } catch (PackageManager.NameNotFoundException e) {
+                return false;
+            }
+        }
+
+        private void updateIsGoogleAppEnabled() {
+            if (mShowGoogleAppPref != null) {
+                mShowGoogleAppPref.setEnabled(isGSAEnabled(getContext()));
+            }
+            if (mShowGoogleBarPref != null) {
+                mShowGoogleBarPref.setEnabled(isGSAEnabled(getContext()));
+            }
+        }
+
         @Override
         public void onResume() {
             super.onResume();
@@ -306,6 +385,7 @@ public class SettingsActivity extends FragmentActivity
                     requestAccessibilityFocus(getListView());
                 }
             }
+            updateIsGoogleAppEnabled();
         }
 
         private PreferenceHighlighter createHighlighter() {
@@ -333,6 +413,14 @@ public class SettingsActivity extends FragmentActivity
                             .performAccessibilityAction(ACTION_ACCESSIBILITY_FOCUS, null);
                 }
             });
+        }
+
+        @Override
+        public void onDestroy() {
+            // if we don't press the home button but the back button to close Settings,
+            // then we must force a restart because the home button watcher wouldn't trigger it
+            LauncherAppState.getInstanceNoCreate().checkIfRestartNeeded();
+            super.onDestroy();
         }
     }
 }

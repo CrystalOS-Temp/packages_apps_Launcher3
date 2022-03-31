@@ -40,7 +40,7 @@ public final class FeatureFlags {
     private FeatureFlags() { }
 
     public static boolean showFlagTogglerUi(Context context) {
-        return Utilities.IS_DEBUG_DEVICE && Utilities.isDevelopersOptionsEnabled(context);
+        return Utilities.isDevelopersOptionsEnabled(context);
     }
 
     /**
@@ -52,7 +52,7 @@ public final class FeatureFlags {
      * Enable moving the QSB on the 0th screen of the workspace. This is not a configuration feature
      * and should be modified at a project level.
      */
-    public static final boolean QSB_ON_FIRST_SCREEN = true;
+    public static final boolean QSB_ON_FIRST_SCREEN = false;
 
     /**
      * Feature flag to handle define config changes dynamically instead of killing the process.
@@ -79,10 +79,10 @@ public final class FeatureFlags {
             "UNSTABLE_SPRINGS", false, "Enable unstable springs for quickstep animations");
 
     public static final BooleanFlag ENABLE_LOCAL_COLOR_POPUPS = getDebugFlag(
-            "ENABLE_LOCAL_COLOR_POPUPS", false, "Enable local color extraction for popups.");
+            "ENABLE_LOCAL_COLOR_POPUPS", true, "Enable local color extraction for popups.");
 
     public static final BooleanFlag KEYGUARD_ANIMATION = getDebugFlag(
-            "KEYGUARD_ANIMATION", false, "Enable animation for keyguard going away on wallpaper");
+            "KEYGUARD_ANIMATION", true, "Enable animation for keyguard going away on wallpaper");
 
     public static final BooleanFlag ADAPTIVE_ICON_WINDOW_ANIM = getDebugFlag(
             "ADAPTIVE_ICON_WINDOW_ANIM", true, "Use adaptive icons for window animations.");
@@ -211,7 +211,7 @@ public final class FeatureFlags {
 
     // TODO: b/172467144 Remove ENABLE_LAUNCHER_ACTIVITY_THEME_CROSSFADE feature flag.
     public static final BooleanFlag ENABLE_LAUNCHER_ACTIVITY_THEME_CROSSFADE = new DeviceFlag(
-            "ENABLE_LAUNCHER_ACTIVITY_THEME_CROSSFADE", false, "Enables a "
+            "ENABLE_LAUNCHER_ACTIVITY_THEME_CROSSFADE", true, "Enables a "
             + "crossfade animation when the system these changes.");
 
     // TODO: b/174174514 Remove ENABLE_APP_PREDICTIONS_WHILE_VISIBLE feature flag.
@@ -231,7 +231,7 @@ public final class FeatureFlags {
             "Uses two panel on home screen. Only applicable on large screen devices.");
 
     public static final BooleanFlag ENABLE_SCRIM_FOR_APP_LAUNCH = getDebugFlag(
-            "ENABLE_SCRIM_FOR_APP_LAUNCH", false,
+            "ENABLE_SCRIM_FOR_APP_LAUNCH", true,
             "Enables scrim during app launch animation.");
 
     public static final BooleanFlag ENABLE_SPLIT_SELECT = getDebugFlag(
@@ -248,7 +248,7 @@ public final class FeatureFlags {
             "Sends a notification whenever launcher encounters an uncaught exception.");
 
     public static final BooleanFlag PROTOTYPE_APP_CLOSE = getDebugFlag(
-            "PROTOTYPE_APP_CLOSE", false, "Enables new app close");
+            "PROTOTYPE_APP_CLOSE", true, "Enables new app close");
 
     public static final BooleanFlag ENABLE_WALLPAPER_SCRIM = getDebugFlag(
             "ENABLE_WALLPAPER_SCRIM", false,
@@ -351,8 +351,6 @@ public final class FeatureFlags {
     }
 
     private static BooleanFlag getDebugFlag(String key, boolean defaultValue, String description) {
-        return Utilities.IS_DEBUG_DEVICE
-                ? new DebugFlag(key, defaultValue, description)
-                : new BooleanFlag(key, defaultValue);
+        return new DebugFlag(key, defaultValue, description);
     }
 }

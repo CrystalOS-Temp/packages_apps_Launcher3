@@ -16,7 +16,16 @@
 
 <androidx.preference.PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:launcher="http://schemas.android.com/apk/res-auto">
+    xmlns:launcher="http://schemas.android.com/apk/res-auto"
+    xmlns:settings="http://schemas.android.com/apk/res/com.android.launcher3">
+
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="pref_workspace_lock"
+        android:persistent="true"
+        android:title="@string/settings_lock_layout_title"
+        android:summaryOn="@string/settings_lock_layout_summary_on"
+        android:summaryOff="@string/settings_lock_layout_summary_off" />
 
     <com.android.launcher3.settings.NotificationDotsPreference
         android:key="pref_icon_badging"
@@ -50,7 +59,62 @@
         launcher:logIdOn="615"
         launcher:logIdOff="616" />
 
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="pref_enable_minus_one"
+        android:summary="@string/pref_show_google_now_summary"
+        android:title="@string/title_show_google_app"/>
+
+    <SwitchPreference
+        android:key="pref_dock_search"
+        android:title="@string/dock_search_title"
+        android:summary="@string/dock_search_summary"
+        android:defaultValue="true" />
+
+    <SwitchPreference
+        android:key="pref_dock_theme"
+        android:title="@string/dock_theme_title"
+        android:summary="@string/dock_theme_summary"
+        android:dependency="pref_dock_search" />
+
+    <com.android.launcher3.settings.preference.CustomSeekBarPreference
+        android:key="pref_custom_icon_size"
+        android:title="@string/icon_size_title"
+        android:persistent="true"
+        android:max="120"
+        settings:min="80"
+        settings:units="%"
+        settings:interval="5"
+        android:defaultValue="100" />
+
+    <com.android.launcher3.settings.preference.CustomSeekBarPreference
+        android:key="pref_custom_font_size"
+        android:title="@string/font_size_title"
+        android:persistent="true"
+        android:max="120"
+        settings:min="80"
+        settings:units="%"
+        settings:interval="5"
+        android:defaultValue="100" />
+
+    <SwitchPreference
+        android:key="pref_dt_gesture"
+        android:title="@string/pref_dt_gesture_title"
+        android:summary="@string/pref_dt_gesture_summary"
+        android:defaultValue="true"
+        android:persistent="true"/>
+
     <androidx.preference.PreferenceScreen
+        android:key="pref_suggestions"
+        android:persistent="false"
+        android:title="@string/pref_suggestions_title"
+        android:summary="@string/pref_suggestions_summary">
+
+        <intent android:action="android.settings.ACTION_CONTENT_SUGGESTIONS_SETTINGS" />
+
+    </androidx.preference.PreferenceScreen>
+
+    <Preference
         android:key="pref_developer_options"
         android:persistent="false"
         android:title="Developer Options"

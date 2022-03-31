@@ -33,6 +33,7 @@ import androidx.annotation.Nullable;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.Insettable;
 import com.android.launcher3.R;
+import com.android.launcher3.settings.SettingsActivity;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.util.MultiValueAlpha;
 import com.android.launcher3.util.MultiValueAlpha.AlphaProperty;
@@ -112,10 +113,16 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        View share = findViewById(R.id.action_share);
-        share.setOnClickListener(this);
         findViewById(R.id.action_screenshot).setOnClickListener(this);
+        if (SettingsActivity.LauncherSettingsFragment.isGSAEnabled(getContext())) {
+            View lens = findViewById(R.id.action_lens);
+            findViewById(R.id.action_lens).setOnClickListener(this);
+            lens.setVisibility(VISIBLE);
+            findViewById(R.id.lens_space).setVisibility(VISIBLE);
+        }
         if (ENABLE_OVERVIEW_SHARE.get()) {
+            View share = findViewById(R.id.action_share);
+            share.setOnClickListener(this);
             share.setVisibility(VISIBLE);
             findViewById(R.id.oav_three_button_space).setVisibility(VISIBLE);
         }
@@ -140,6 +147,8 @@ public class OverviewActionsView<T extends OverlayUICallbacks> extends FrameLayo
             mCallbacks.onShare();
         } else if (id == R.id.action_screenshot) {
             mCallbacks.onScreenshot();
+        } else if (id == R.id.action_lens) {
+            mCallbacks.onLens();
         }
     }
 

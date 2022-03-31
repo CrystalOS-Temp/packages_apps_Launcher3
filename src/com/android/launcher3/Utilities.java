@@ -17,7 +17,11 @@
 package com.android.launcher3;
 
 import static com.android.launcher3.model.data.ItemInfoWithIcon.FLAG_ICON_BADGED;
+import static com.android.launcher3.util.Executors.MODEL_EXECUTOR;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
 import android.app.Person;
@@ -81,12 +85,14 @@ import com.android.launcher3.icons.ShortcutCachingLogic;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.pm.ShortcutConfigActivityInfo;
+import com.android.launcher3.settings.SettingsActivity;
 import com.android.launcher3.shortcuts.ShortcutKey;
 import com.android.launcher3.shortcuts.ShortcutRequest;
 import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.views.BaseDragLayer;
 import com.android.launcher3.widget.PendingAddShortcutInfo;
+import com.android.launcher3.util.LooperExecutor;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -130,6 +136,15 @@ public final class Utilities {
      */
     public static final int EDGE_NAV_BAR = 1 << 8;
 
+    public static final String KEY_DT_GESTURE = "pref_dt_gesture";
+
+    public static final String KEY_DEFAULT_HOME_PAGE = "pref_default_homepage";
+
+    private static final long WAIT_BEFORE_RESTART = 250;
+
+    public static final String ICON_SIZE = "pref_custom_icon_size";
+    public static final String FONT_SIZE = "pref_custom_font_size";
+
     /**
      * Indicates if the device has a debug build. Should only be used to store additional info or
      * add extra logging and not for changing the app behavior.
@@ -137,6 +152,14 @@ public final class Utilities {
     public static final boolean IS_DEBUG_DEVICE =
             Build.TYPE.toLowerCase(Locale.ROOT).contains("debug") ||
             Build.TYPE.toLowerCase(Locale.ROOT).equals("eng");
+
+    public static final String GSA_PACKAGE = "com.google.android.googlequicksearchbox";
+    public static final String LENS_ACTIVITY = "com.google.android.apps.lens.MainActivity";
+    public static final String LENS_SHARE_ACTIVITY = "com.google.android.apps.search.lens.LensShareEntryPointActivity";
+    public static final String LENS_URI = "google://lens";
+
+    public static final String KEY_DOCK_SEARCH = "pref_dock_search";
+    public static final String KEY_DOCK_THEME = "pref_dock_theme";
 
     /**
      * Returns true if theme is dark.
@@ -856,5 +879,50 @@ public final class Utilities {
         public int getIntrinsicWidth() {
             return mSize;
         }
+    }
+
+    public static boolean isDoubleTapGestureEnabled(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getBoolean(KEY_DT_GESTURE, true);
+    }
+
+    public static void restart(final Context context) {
+        //ProgressDialog.show(context, null, context.getString(R.string.state_loading), true, false);
+        MODEL_EXECUTOR.execute(() -> {
+            try {
+                Thread.sleep(WAIT_BEFORE_RESTART);
+            } catch (Exception ignored) {
+            }
+            android.os.Process.killProcess(android.os.Process.myPid());
+        });
+    }
+
+    public static int getIconSizeModifier(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getInt(ICON_SIZE, 100);
+    }
+
+    public static int getFontSizeModifier(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getInt(FONT_SIZE, 100);
+    }
+
+    public static boolean isWorkspaceEditAllowed(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return !prefs.getBoolean(InvariantDeviceProfile.KEY_WORKSPACE_LOCK, false);
+    }
+
+    public static boolean showQSB(Context context) {
+        return SettingsActivity.LauncherSettingsFragment.isGSAEnabled(context) && isQSBEnabled(context);
+    }
+
+    private static boolean isQSBEnabled(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getBoolean(KEY_DOCK_SEARCH, true);
+    }
+
+    public static boolean isThemedIconsEnabled(Context context) {
+        SharedPreferences prefs = getPrefs(context.getApplicationContext());
+        return prefs.getBoolean(KEY_DOCK_THEME, false);
     }
 }

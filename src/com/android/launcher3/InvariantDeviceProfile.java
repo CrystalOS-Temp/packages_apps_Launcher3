@@ -78,6 +78,8 @@ public class InvariantDeviceProfile {
 
     private static final float ICON_SIZE_DEFINED_IN_APP_DP = 48;
 
+    public static final String KEY_WORKSPACE_LOCK = "pref_workspace_lock";
+
     // Constants that affects the interpolation curve between statically defined device profile
     // buckets.
     private static final float KNEARESTNEIGHBOR = 3;
@@ -290,11 +292,13 @@ public class InvariantDeviceProfile {
 
         mExtraAttrs = closestProfile.extraAttrs;
 
-        iconSize = displayOption.iconSize;
-        landscapeIconSize = displayOption.landscapeIconSize;
+        float iconSizeModifier = (float) Utilities.getIconSizeModifier(context) / 100F;
+        float fontSizeModifier = (float) Utilities.getFontSizeModifier(context) / 100F;
+        iconSize = displayOption.iconSize * iconSizeModifier;
+        landscapeIconSize = displayOption.landscapeIconSize * iconSizeModifier;
         iconBitmapSize = ResourceUtils.pxFromDp(iconSize, metrics);
-        iconTextSize = displayOption.iconTextSize;
-        landscapeIconTextSize = displayOption.landscapeIconTextSize;
+        iconTextSize = displayOption.iconTextSize * fontSizeModifier;
+        landscapeIconTextSize = displayOption.landscapeIconTextSize * fontSizeModifier;
         fillResIconDpi = getLauncherIconDensity(iconBitmapSize);
 
         minCellHeight = displayOption.minCellHeight;
@@ -309,13 +313,8 @@ public class InvariantDeviceProfile {
         numDatabaseAllAppsColumns = isSplitDisplay
                 ? closestProfile.numDatabaseAllAppsColumns : closestProfile.numAllAppsColumns;
 
-        if (Utilities.isGridOptionsEnabled(context)) {
-            allAppsIconSize = displayOption.allAppsIconSize;
-            allAppsIconTextSize = displayOption.allAppsIconTextSize;
-        } else {
-            allAppsIconSize = iconSize;
-            allAppsIconTextSize = iconTextSize;
-        }
+        allAppsIconSize = iconSize * iconSizeModifier;
+        allAppsIconTextSize = iconTextSize * fontSizeModifier;
 
         if (devicePaddingId != 0) {
             devicePaddings = new DevicePaddings(context, devicePaddingId);
@@ -375,7 +374,7 @@ public class InvariantDeviceProfile {
     private void onConfigChanged(Context context) {
         // Re-init grid
         String gridName = getCurrentGridName(context);
-        initGrid(context, gridName);
+        initGrid(context, Utilities.getPrefs(context).getString(KEY_IDP_GRID_NAME, gridName));
 
         for (OnIDPChangeListener listener : mChangeListeners) {
             listener.onIdpChanged(this);

@@ -7,6 +7,7 @@ import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.ImageView;
@@ -18,6 +19,7 @@ import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.BaseDraggingActivity;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
+import com.android.launcher3.Utilities;
 import com.android.launcher3.model.WidgetItem;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
@@ -26,6 +28,7 @@ import com.android.launcher3.util.PackageManagerHelper;
 import com.android.launcher3.util.PackageUserKey;
 import com.android.launcher3.widget.WidgetsBottomSheet;
 
+import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -133,6 +136,7 @@ public abstract class SystemShortcut<T extends BaseDraggingActivity> extends Ite
 
         @Override
         public void onClick(View view) {
+            if (!Utilities.isWorkspaceEditAllowed(mTarget.getApplicationContext())) return;
             AbstractFloatingView.closeAllOpenViews(mTarget);
             WidgetsBottomSheet widgetsBottomSheet =
                     (WidgetsBottomSheet) mTarget.getLayoutInflater().inflate(
@@ -193,6 +197,38 @@ public abstract class SystemShortcut<T extends BaseDraggingActivity> extends Ite
                     mItemInfo.getTargetComponent().getPackageName());
             mTarget.startActivitySafely(view, intent, mItemInfo);
             AbstractFloatingView.closeAllOpenViews(mTarget);
+        }
+    }
+
+    public static final Factory<BaseDraggingActivity> UNINSTALL = (activity, itemInfo) -> {
+        if (itemInfo.getTargetComponent() == null) {
+            return null;
+        }
+        if (PackageManagerHelper.isSystemApp(activity,
+             itemInfo.getTargetComponent().getPackageName())) {
+            return null;
+        }
+        return new UnInstall(activity, itemInfo);
+    };
+
+    public static class UnInstall extends SystemShortcut {
+
+        public UnInstall(BaseDraggingActivity target, ItemInfo itemInfo) {
+            super(R.drawable.ic_uninstall_no_shadow, R.string.uninstall_drop_target_label,
+                    target, itemInfo);
+        }
+
+        @Override
+        public void onClick(View view) {
+            try {
+                Intent intent = Intent.parseUri(view.getContext().getString(R.string.delete_package_intent), 0)
+                    .setData(Uri.fromParts("package", mItemInfo.getTargetComponent().getPackageName(),
+                    mItemInfo.getTargetComponent().getClassName())).putExtra(Intent.EXTRA_USER, mItemInfo.user);
+                mTarget.startActivitySafely(view, intent, mItemInfo);
+                AbstractFloatingView.closeAllOpenViews(mTarget);
+            } catch (URISyntaxException e) {
+                // Do nothing.
+            }
         }
     }
 
